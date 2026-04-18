@@ -1,0 +1,4 @@
+[mcp_servers.laravel-boost]
+command = "php"
+args = ["artisan", "boost:mcp"]
+cwd = "/mnt/data/Files/mostafa_safwat/my data/Iti/Projects/job_board/back/back"
