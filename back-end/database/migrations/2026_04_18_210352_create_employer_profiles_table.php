@@ -18,19 +18,16 @@ return new class extends Migration {
                 ->constrained('users')
                 ->onDelete('cascade')
                 ->onUpdate('cascade');
-            $table->string('company_name')->nullable();
+            $table->string('company_name');
             $table->text('company_description')->nullable();
             $table->string('company_website')->nullable();
             $table->string('company_logo')->nullable();
-            $table->string('company_location')->nullable();
+            $table->string('company_location');
 
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('employer_profiles');

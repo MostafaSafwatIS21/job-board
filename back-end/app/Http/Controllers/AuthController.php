@@ -26,12 +26,23 @@ class AuthController extends Controller
     }
     public function login( Request $request)
     {
+        $validated = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string',
+        ]);
+        $user = User::where('email', $validated['email'])->first();
 
-        return response()->json(['message' => 'Login successful'], 200);
+        if (!$user || !Hash::check($validated['password'], $user->password)) {
+            return response()->json(['message' => 'Invalid credentials'], 401);
+        }
+
+        $token = $user->createToken('api_token')->plainTextToken;
+
+        return response()->json(['message' => 'Login successful', 'user' => $user, 'token' => $token], 200);
     }
     public function logout(Request $request)
     {
-        // $request->user()->currentAccessToken()->delete();
+        $request->user()->currentAccessToken()?->delete();
 
         return response()->json(['message' => 'Logged out successfully'], 200);
     }
@@ -53,10 +64,10 @@ class AuthController extends Controller
         if ($validatedRole["role"] === "employer") {
             $validatedProfile = $request->validate([
                 "company_name" => "required|string|max:255",
-                "company_website" => "nullable|url|max:255",
+                "company_website" => "required|url|max:255",
                 "company_description" => "nullable|string",
                 "company_logo" => "nullable|string|max:255",
-                "company_location" => "nullable|string|max:255",
+                "company_location" => "required|string|max:255",
             ]);
 
             $profile = $user->employerProfile()->updateOrCreate(
