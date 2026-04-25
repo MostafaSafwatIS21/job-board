@@ -11,6 +11,8 @@ use App\Http\Controllers\AuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+use App\Http\Middleware\AllowTo;
+
 Route::middleware("auth:sanctum")->get("/user", function (Request $request) {
     return response()->json(["user" => $request->user()]);
 });
@@ -31,8 +33,20 @@ Route::middleware("auth:sanctum")->post("/tokens/create", function (
 // complete profile
 Route::middleware("auth:sanctum")->post("/complete-profile",[AuthController::class, "completeProfile"]);
 
+Route::middleware(['auth:sanctum'])->group(function () {
+
+Route::get("job-listings", [JobListingController::class, "index"]);
+Route::get("/job-listings/{job_listing}", [JobListingController::class, "show"]);
+
+Route::post("/job-listings", [JobListingController::class, "store"])->middleware(AllowTo::class . ":employer");
+Route::put("/job-listings/{job_listing}", [JobListingController::class, "update"])->middleware(AllowTo::class . ":employer");
+Route::delete("/job-listings/{job_listing}", [JobListingController::class, "destroy"])->middleware(AllowTo::class . ":employer");
+
+});
+
+
+
 Route::apiResource("categories", CategoriesController::class);
-Route::apiResource("job-listings", JobListingController::class);
 Route::apiResource("applications", ApplicationController::class);
 Route::apiResource("employer-profiles", EmployerProfileController::class);
 Route::apiResource("employer-candidates", EmployerCandidateController::class);
