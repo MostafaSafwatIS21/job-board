@@ -1,4 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import axios from "axios";
 import type { RootState } from "../store";
 import {
   api,
@@ -40,17 +41,41 @@ interface AuthState {
   user: AuthUser | null;
   token: string | null;
   isLoading: boolean;
+  isHydrating: boolean;
   error: string | null;
   isAuthenticated: boolean;
+  completed_profile: boolean;
 }
+
+const persistedToken = getAuthToken();
 
 const initialState: AuthState = {
   user: null,
-  token: getAuthToken(),
+  token: persistedToken,
   isLoading: false,
+  isHydrating: Boolean(persistedToken),
   error: null,
-  isAuthenticated: Boolean(getAuthToken()),
+  isAuthenticated: Boolean(persistedToken),
+  completed_profile: false,
 };
+
+export const fetchCurrentUserThunk = createAsyncThunk<
+  AuthUser,
+  void,
+  { rejectValue: string }
+>("auth/fetchCurrentUser", async (_, thunkApi) => {
+  try {
+    const res = await api.get("/user");
+    const user = res.data?.user as AuthUser | undefined;
+    if (!user) throw new Error("Invalid user response");
+    return user;
+  } catch (err) {
+    if (axios.isAxiosError(err) && err.response?.status === 401) {
+      setAuthToken(null);
+    }
+    return thunkApi.rejectWithValue(getApiErrorMessage(err));
+  }
+});
 
 export const loginThunk = createAsyncThunk<
   { user: AuthUser; token: string },
@@ -155,6 +180,7 @@ export const authSlice = createSlice({
     builder
       .addCase(loginThunk.pending, (state) => {
         state.isLoading = true;
+        state.isHydrating = false;
         state.error = null;
         state.isAuthenticated = false;
       })
@@ -163,14 +189,18 @@ export const authSlice = createSlice({
         state.user = action.payload.user;
         state.token = action.payload.token;
         state.isAuthenticated = true;
+        state.completed_profile = action.payload.user.completed_profile;
+        state.isHydrating = false;
       })
       .addCase(loginThunk.rejected, (state, action) => {
         state.isLoading = false;
+        state.isHydrating = false;
         state.error = action.payload ?? "Login failed";
         state.isAuthenticated = false;
       })
       .addCase(registerThunk.pending, (state) => {
         state.isLoading = true;
+        state.isHydrating = false;
         state.error = null;
         state.isAuthenticated = false;
       })
@@ -179,9 +209,11 @@ export const authSlice = createSlice({
         state.user = action.payload.user;
         state.token = action.payload.token;
         state.isAuthenticated = true;
+        state.isHydrating = false;
       })
       .addCase(registerThunk.rejected, (state, action) => {
         state.isLoading = false;
+        state.isHydrating = false;
         state.error = action.payload ?? "Register failed";
         state.isAuthenticated = false;
       })
@@ -192,6 +224,7 @@ export const authSlice = createSlice({
       })
       .addCase(logoutThunk.fulfilled, (state) => {
         state.isLoading = false;
+        state.isHydrating = false;
         state.user = null;
         state.token = null;
         state.isAuthenticated = false;
@@ -202,6 +235,24 @@ export const authSlice = createSlice({
         state.token = null;
         state.error = action.payload ?? null;
         state.isAuthenticated = false;
+        state.isHydrating = false;
+      })
+      .addCase(fetchCurrentUserThunk.pending, (state) => {
+        state.isHydrating = true;
+        state.error = null;
+      })
+      .addCase(fetchCurrentUserThunk.fulfilled, (state, action) => {
+        state.isHydrating = false;
+        state.user = action.payload;
+        state.isAuthenticated = true;
+        state.completed_profile = action.payload.completed_profile;
+      })
+      .addCase(fetchCurrentUserThunk.rejected, (state, action) => {
+        state.isHydrating = false;
+        state.user = null;
+        state.token = null;
+        state.isAuthenticated = false;
+        state.error = action.payload ?? "Failed to restore user session";
       })
       .addCase(completeCandidateProfile.pending, (state) => {
         state.isLoading = true;
@@ -210,6 +261,7 @@ export const authSlice = createSlice({
       .addCase(completeCandidateProfile.fulfilled, (state, action) => {
         state.isLoading = false;
         state.user = action.payload.user;
+        state.completed_profile = action.payload.user.completed_profile;
       })
       .addCase(completeCandidateProfile.rejected, (state, action) => {
         state.isLoading = false;
@@ -222,6 +274,7 @@ export const authSlice = createSlice({
       .addCase(completeEmployerProfile.fulfilled, (state, action) => {
         state.isLoading = false;
         state.user = action.payload.user;
+        state.completed_profile = action.payload.user.completed_profile;
       })
       .addCase(completeEmployerProfile.rejected, (state, action) => {
         state.isLoading = false;
