@@ -16,6 +16,10 @@ class AllowTo
      */
     public function handle(Request $request, Closure $next, ...$roles): Response
     {
+        // check if user complete his profile
+        if (Auth::check() && !Auth::user()->completed_profile) {
+            return response()->json(["message" => "Please complete your profile first","test"=>Auth::user()], 403);
+        }
 
         if (!auth('sanctum')->check() || !in_array(auth('sanctum')->user()->role, $roles)) {
             abort(403, 'Unauthorized');

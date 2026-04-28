@@ -8,6 +8,8 @@ use App\Http\Controllers\JobListingController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\UploadController;
+use App\Http\Controllers\AdminController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -45,10 +47,35 @@ Route::delete("/job-listings/{job_listing}", [JobListingController::class, "dest
 });
 
 
+Route::middleware(['auth:sanctum'])->group(function () {
+
+
+Route::get("/employers", [EmployerProfileController::class, "index"])->middleware(AllowTo::class . ":admin");
+
+Route::get("/employers/{employerProfile}", [EmployerProfileController::class, "show"]);
+
+// Route::post("/employers", [EmployerProfileController::class, "store"])->middleware(AllowTo::class . ":employer");
+Route::put("/employers", [EmployerProfileController::class, "update"])->middleware(AllowTo::class . ":employer");
+Route::delete("/employers", [EmployerProfileController::class, "destroy"])->middleware(AllowTo::class . ":employer");
+
+});
+
+// upload routes
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::put("/upload/logos", [UploadController::class, "uploadLogos"])->middleware(AllowTo::class . ":employer");
+    Route::put("/upload/avatars", [UploadController::class, "uploadAvatar"]);
+});
+
+Route::middleware(['auth:sanctum', AllowTo::class . ':admin'])->group(function () {
+    Route::get("/admin/employers", [AdminController::class, "reviewEmployerProfiles"]);
+    Route::get("/admin/job-listings", [AdminController::class, "reviewJobListings"]);
+    Route::get("/admin/employers/{employerId}", [AdminController::class, "reviewEmployerProfile"]);
+    Route::get("/admin/job-listings/{jobListingId}", [AdminController::class, "reviewJobListing"]);
+    Route::put("/admin/job-listings/{jobListingId}/status", [AdminController::class, "updateJobListingStatus"]);
+});
 
 Route::apiResource("categories", CategoriesController::class);
 Route::apiResource("applications", ApplicationController::class);
-Route::apiResource("employer-profiles", EmployerProfileController::class);
 Route::apiResource("employer-candidates", EmployerCandidateController::class);
 Route::apiResource("messages", MessageController::class);
 Route::apiResource("notifications", NotificationController::class);
