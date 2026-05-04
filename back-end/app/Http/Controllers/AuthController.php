@@ -7,51 +7,70 @@ use App\Http\Requests\AuthRequest;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
-
 class AuthController extends Controller
 {
-    public function register (AuthRequest $request)
+    public function register(AuthRequest $request)
     {
         $validated = $request->validated();
 
         $user = User::create([
-            'email' => $validated['email'],
-            'name' => $validated['name'],
-            'password' => Hash::make($validated['password']),
+            "email" => $validated["email"],
+            "name" => $validated["name"],
+            "password" => Hash::make($validated["password"]),
         ]);
 
-        $token = $user->createToken('api_token')->plainTextToken;
+        $token = $user->createToken("api_token")->plainTextToken;
 
-        return response()->json(['message' => 'User registered successfully', 'user' => $user, 'token' => $token], 201);
+        return response()->json(
+            [
+                "message" => "User registered successfully",
+                "user" => $user,
+                "token" => $token,
+            ],
+            201,
+        );
     }
-    public function login( Request $request)
+    public function login(Request $request)
     {
         $validated = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string',
+            "email" => "required|email",
+            "password" => "required|string",
         ]);
-        $user = User::where('email', $validated['email'])->first();
+        $user = User::where("email", $validated["email"])->first();
 
-        if (!$user || !Hash::check($validated['password'], $user->password)) {
-            return response()->json(['message' => 'Invalid credentials'], 401);
+        if (!$user || !Hash::check($validated["password"], $user->password)) {
+            return response()->json(["message" => "Invalid credentials"], 401);
         }
 
-        $token = $user->createToken('api_token')->plainTextToken;
+        $token = $user->createToken("api_token")->plainTextToken;
 
-        return response()->json(['message' => 'Login successful', 'user' => $user, 'token' => $token], 200);
+        return response()->json(
+            [
+                "message" => "Login successful",
+                "user" => $user,
+                "token" => $token,
+            ],
+            200,
+        );
     }
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()?->delete();
 
-        return response()->json(['message' => 'Logged out successfully'], 200);
+        return response()->json(["message" => "Logged out successfully"], 200);
     }
 
     public function completeProfile(Request $request)
     {
         // chck if user has already completed profile
         if ($request->user()->completed_profile) {
-            return response()->json(["message" => "Profile already completed, you can update it at any time"], 400);
+            return response()->json(
+                [
+                    "message" =>
+                        "Profile already completed, you can update it at any time",
+                ],
+                400,
+            );
         }
 
         $validatedRole = $request->validate([
@@ -81,13 +100,13 @@ class AuthController extends Controller
                     "company_logo" => $validatedProfile["company_logo"] ?? null,
                     "company_location" =>
                         $validatedProfile["company_location"] ?? null,
-                ]
+                ],
             );
         } else {
             $validatedProfile = $request->validate([
-                "headline" => "nullable|string|max:255",
-                "phone" => "nullable|string|max:20",
-                "location" => "nullable|string|max:255",
+                "headline" => "required|string|max:255",
+                "phone" => "required|string|max:20",
+                "location" => "required|string|max:255",
                 "resume_url" => "nullable|url|max:255",
                 "social_media" => "nullable|array",
             ]);
@@ -102,7 +121,7 @@ class AuthController extends Controller
                     "location" => $validatedProfile["location"] ?? null,
                     "resume_url" => $validatedProfile["resume_url"] ?? null,
                     "social_media" => $validatedProfile["social_media"] ?? null,
-                ]
+                ],
             );
         }
 
@@ -116,7 +135,7 @@ class AuthController extends Controller
                 "user" => $user,
                 "profile" => $profile,
             ],
-            200
+            200,
         );
     }
 }

@@ -12,31 +12,44 @@ class EmployerCandidateController extends Controller
      */
     public function index()
     {
-        //
+        $limit = min(request()->query("limit", 10), 100); // Cap limit at 100
+        $page = max(request()->query("page", 1), 1); // Ensure page >= 1
+        $offset = ($page - 1) * $limit;
+
+        $employerCandidates = EmployerCandidate::offset($offset)
+            ->limit($limit)
+            ->get();
+        return response()->json(["data" => $employerCandidates]);
     }
 
     /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
+     * Display the specified resource. for admin
      */
     public function show(EmployerCandidate $employerCandidate)
     {
-        //
+        return response()->json(["data" => $employerCandidate]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, EmployerCandidate $employerCandidate)
+    public function update(Request $request)
     {
-        //
+        // $employerCandidate = Auth::user()->employerCandidate;
+        $userId = auth()->id();
+        $employerCandidate = EmployerCandidate::where(
+            "user_id",
+            $userId,
+        )->first();
+        $validated = $request->validate([
+            "headline" => "sometimes|string|max:255",
+            "phone" => "sometimes|string|max:20",
+            "location" => "sometimes|string|max:255",
+            "social_media" => "sometimes|array|url|max:255",
+        ]);
+
+        $employerCandidate->update($validated);
+        return response()->json([
+            "message" => "Candidate updated successfully",
+            "data" => $employerCandidate,
+        ]);
     }
 
     /**
