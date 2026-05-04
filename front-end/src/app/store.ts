@@ -1,9 +1,11 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authSlice from "./auth/authSlice";
+import jobListReducer from "./jobListSlice";
 
 const store = configureStore({
   reducer: {
     auth: authSlice,
+    jobList: jobListReducer,
   },
 });
 

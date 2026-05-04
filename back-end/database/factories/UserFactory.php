@@ -29,6 +29,9 @@ class UserFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
+            'role' => 'user',
+            'confirmed' => true,
+            'completed_profile' => false,
             'remember_token' => Str::random(10),
         ];
     }
@@ -40,6 +43,39 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
+        ]);
+    }
+
+    /**
+     * Indicate the user is an admin.
+     */
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'admin',
+            'completed_profile' => true,
+        ]);
+    }
+
+    /**
+     * Indicate the user is an employer with a completed profile.
+     */
+    public function employer(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'employer',
+            'completed_profile' => true,
+        ]);
+    }
+
+    /**
+     * Indicate the user is a candidate with a completed profile.
+     */
+    public function candidate(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'candidate',
+            'completed_profile' => true,
         ]);
     }
 }

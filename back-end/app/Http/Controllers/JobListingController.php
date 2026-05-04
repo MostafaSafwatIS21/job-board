@@ -13,13 +13,65 @@ class JobListingController extends Controller
      */
     public function index()
     {
-        $data = JobListing::all();
-        return response()->json(["message" => "Job listings retrieved successfully", "data" => $data], 200);
+        $limit = min(request()->query('limit', 10), 100); // Cap limit at 100
+        $page = max(request()->query('page', 1), 1); // Ensure page >= 1
+        $offset = ($page - 1) * $limit;
+
+        $query = JobListing::with(['employer:id,name', 'category:id,name'])
+            ->where('status', 'approved');
+
+        // Optimize search with validation
+        $search = request()->query('search');
+        if ($search) {
+            $search = trim($search);
+            // Limit search term length to prevent performance issues
+            if (strlen($search) > 100) {
+                $search = substr($search, 0, 100);
+            }
+
+            // Use case-insensitive search with proper escaping
+            $query->where(function ($q) use ($search) {
+                // Search in individual text columns (case-insensitive)
+                $q->whereRaw("LOWER(title) LIKE ?", ["%".strtolower($search)."%"])
+                    ->orWhereRaw("LOWER(description) LIKE ?", ["%".strtolower($search)."%"])
+                    ->orWhereRaw("LOWER(location) LIKE ?", ["%".strtolower($search)."%"])
+                    ->orWhereRaw("LOWER(experience_level) LIKE ?", ["%".strtolower($search)."%"])
+                    ->orWhereRaw("LOWER(work_type) LIKE ?", ["%".strtolower($search)."%"])
+                    // For JSON skills column: case-insensitive search
+                    ->orWhereRaw("LOWER(skills) LIKE ?", ["%".strtolower($search)."%"]);
+            });
+        }
+        $category = request()->query('category');
+        if ($category) {
+            $query->where('category_id', $category);
+        }
+        $job_type = request()->query('job_type');
+        if ($job_type) {
+            $query->where('work_type', $job_type);
+        }
+        $location = request()->query('location');
+        if ($location) {
+            $query->whereRaw("LOWER(location) LIKE ?", ["%".strtolower($location)."%"]);
+        }
+        $salaryRange = request()->query('salaryRange');
+
+        if ($salaryRange) {
+            $query->where('salary_min','>=', $salaryRange[0])
+            ->where('salary_max', '<=', $salaryRange[1]);
+        }
+
+        $total = $query->count();
+        $dataFind = $query->skip($offset)->take($limit)->get();
+
+        return response()->json([
+            "message" => "Job listings retrieved successfully",
+            "total_pages" => ceil($total / $limit),
+            "data" => $dataFind,
+            'range'=>$salaryRange[1],
+
+        ], 200);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         // get employer id from auth
@@ -39,6 +91,8 @@ class JobListingController extends Controller
             "salary_max" => "required|numeric",
             "deadline" => "required|date",
             "category_id" => "required|exists:categories,id",
+            "skills" => "nullable|array",
+            "skills.*" => "string|max:100",
         ]);
         $jobListing = JobListing::create($request->all() + ['employer_id' => $employerId]);
         return response()->json(["message" => "Job listing created successfully", "data" => $jobListing], 201);
@@ -50,7 +104,14 @@ class JobListingController extends Controller
     public function show(JobListing $jobListing)
     {
 
-        return response()->json(["message" => "Job listing retrieved successfully", "data" => $jobListing], 200);
+        // show job and his employer and category
+        $employer = $jobListing->employer()->first();
+
+        $jobListing->load(['employer', 'category:id,name']);
+
+
+
+        return response()->json(["message" => "Job listing retrieved successfully", "data" => $jobListing, "employer" => $employer], 200);
     }
 
     /**
@@ -75,6 +136,8 @@ class JobListingController extends Controller
             "salary_max" => "sometimes|required|numeric",
             "deadline" => "sometimes|required|date",
             "category_id" => "sometimes|required|exists:categories,id",
+            "skills" => "nullable|array",
+            "skills.*" => "string|max:100",
         ]);
 
 

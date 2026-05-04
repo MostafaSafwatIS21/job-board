@@ -8,6 +8,7 @@ import { RegisterPage } from "./screens/RegisterPage";
 import { CompleteProfilePage } from "./screens/CompleteProfilePage";
 import ProtectedRoute from "./guard/auth"; // Import your guard
 import IsCompleted from "./guard/completed";
+import { JobDetails } from "./components/JobDetails";
 
 export const router = createBrowserRouter([
   {
@@ -22,9 +23,12 @@ export const router = createBrowserRouter([
             path: "job-listings",
             element: <JobListingsPage />,
           },
+          {
+            path: "job-listings/:jobId",
+            element: <JobDetails />,
+          },
         ],
       },
-
       {
         element: <ProtectedRoute />,
         children: [
