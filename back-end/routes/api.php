@@ -16,6 +16,8 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Middleware\AllowTo;
 
+// Authenticated user route
+
 Route::middleware("auth:sanctum")->get("/user", function (Request $request) {
     return response()->json(["user" => $request->user()]);
 });
@@ -44,6 +46,8 @@ Route::middleware("auth:sanctum")->post("/complete-profile", [
     "completeProfile",
 ]);
 
+// job listing routes
+
 Route::middleware(["auth:sanctum"])->group(function () {
     Route::get("job-listings", [JobListingController::class, "index"]);
     Route::get("/job-listings/{job_listing}", [
@@ -65,6 +69,7 @@ Route::middleware(["auth:sanctum"])->group(function () {
     ])->middleware(AllowTo::class . ":employer");
 });
 
+// employer profile routes
 Route::middleware(["auth:sanctum"])->group(function () {
     Route::get("/employers", [
         EmployerProfileController::class,
@@ -76,7 +81,6 @@ Route::middleware(["auth:sanctum"])->group(function () {
         "show",
     ]);
 
-    // Route::post("/employers", [EmployerProfileController::class, "store"])->middleware(AllowTo::class . ":employer");
     Route::put("/employers", [
         EmployerProfileController::class,
         "update",
@@ -95,6 +99,8 @@ Route::middleware(["auth:sanctum"])->group(function () {
     ])->middleware(AllowTo::class . ":employer");
     Route::put("/upload/avatars", [UploadController::class, "uploadAvatar"]);
 });
+
+// admin routes
 
 Route::middleware(["auth:sanctum", AllowTo::class . ":admin"])->group(
     function () {
@@ -121,6 +127,8 @@ Route::middleware(["auth:sanctum", AllowTo::class . ":admin"])->group(
     },
 );
 
+// # employer candidate routes
+
 Route::middleware(["auth:sanctum"])->group(function () {
     Route::get("/candidates", [EmployerCandidateController::class, "index"]);
     Route::get("/candidates/{candidateId}", [
@@ -137,7 +145,21 @@ Route::middleware(["auth:sanctum"])->group(function () {
     ]);
 });
 
+
+// application routes
+Route::prefix("applications")->group(function () {
+    Route::middleware(["auth:sanctum"])->group(function () {
+    Route::get("/{job_id}/job", [ApplicationController::class, "index"]);
+    Route::get("/{applicationId}/", [ApplicationController::class, "show"]);
+    Route::post("/{job_id}/", [ApplicationController::class, "store"])->middleware(AllowTo::class . ":candidate");
+    Route::put("/{applicationId}/", [ApplicationController::class, "update"])->middleware(AllowTo::class . ":candidate");
+    Route::delete("/{applicationId}/", [
+        ApplicationController::class,
+        "destroy",
+    ])->middleware(AllowTo::class . ":candidate");
+});
+});
+
 Route::apiResource("categories", CategoriesController::class);
-Route::apiResource("applications", ApplicationController::class);
 Route::apiResource("messages", MessageController::class);
 Route::apiResource("notifications", NotificationController::class);

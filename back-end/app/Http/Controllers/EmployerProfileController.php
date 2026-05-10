@@ -37,7 +37,7 @@ class EmployerProfileController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update the specified resource in storage.z
      */
     public function update(Request $request)
     {
