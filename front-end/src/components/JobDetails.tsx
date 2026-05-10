@@ -1,9 +1,12 @@
 import { clearCurrentJob, getJobListingById } from "@/app/jobListSlice";
 import type { AppDispatch, RootState } from "@/app/store";
+import { fetchApplicationsByJob } from "@/app/application/appSlice";
 import { ArrowArcRightIcon, ArrowLeftIcon } from "@phosphor-icons/react";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
+import ApplicationFrom from "./ApplicationFrom";
+import ApplicationList from "./ApplicationList";
 
 const levelLabels: Record<string, string> = {
   entry_level: "Entry Level",
@@ -38,10 +41,22 @@ export function JobDetails() {
     loading,
     error,
   } = useSelector((state: RootState) => state.jobList);
+  const { items: applications, loading: applicationsLoading } = useSelector(
+    (state: RootState) => state.applications,
+  );
+  const { user } = useSelector((state: RootState) => state.auth);
+  const currentUserId = user?.id;
+  const hasApplied = Boolean(
+    currentUserId &&
+    applications.some(
+      (app) => app.candidate_id === currentUserId && app.job_id === job?.id,
+    ),
+  );
 
   useEffect(() => {
     if (jobId) {
       dispatch(getJobListingById(Number(jobId)));
+      dispatch(fetchApplicationsByJob(Number(jobId)));
     }
     return () => {
       dispatch(clearCurrentJob());
@@ -101,13 +116,25 @@ export function JobDetails() {
             </p>
           </div>
 
+          {user?.role === "candidate" && (
+            <div className=" border border-border/70 bg-card p-6 shadow-sm">
+              {applicationsLoading ? (
+                <p className="text-sm text-muted-foreground">
+                  Checking your application status…
+                </p>
+              ) : hasApplied ? (
+                <p className="text-sm text-muted-foreground">
+                  You already applied for this job.
+                </p>
+              ) : (
+                <ApplicationFrom jobId={job.id} />
+              )}
+            </div>
+          )}
+
           <div>
-            <h2 className="text-lg font-semibold tracking-tight text-foreground">
-              Apply for this job
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Application form coming soon.
-            </p>
+            <h1 className="text-2xl font-bold m-4">Job Applications</h1>
+            <ApplicationList />
           </div>
         </div>
 

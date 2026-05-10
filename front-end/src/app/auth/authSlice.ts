@@ -9,6 +9,7 @@ import {
 } from "@/utils/api";
 
 type AuthUser = {
+  id: number;
   name: string;
   email: string;
   completed_profile: boolean;
