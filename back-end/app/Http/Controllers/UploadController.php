@@ -89,8 +89,7 @@ class UploadController extends Controller
         )->first();
 
         if ($employerCandidate) {
-            $employerCandidate->resume_u
-            rl = $url;
+            $employerCandidate->resume_url = $url;
             $employerCandidate->save();
         }
         return response()->json(

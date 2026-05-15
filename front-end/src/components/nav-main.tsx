@@ -1,57 +1,97 @@
-import { Button } from "@/components/ui/button"
+import { Collapsible } from "radix-ui";
+import { Link, useLocation } from "react-router-dom";
+import { CaretDownIcon } from "@phosphor-icons/react";
 import {
   SidebarGroup,
-  SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
-import { PlusCircleIcon, EnvelopeIcon } from "@phosphor-icons/react"
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
+} from "@/components/ui/sidebar";
+
+export type NavSubItem = {
+  title: string;
+  url: string;
+};
+
+export type NavItem = {
+  title: string;
+  url: string;
+  icon?: React.ReactNode;
+  items?: NavSubItem[];
+};
 
 export function NavMain({
+  label,
   items,
 }: {
-  items: {
-    title: string
-    url: string
-    icon?: React.ReactNode
-  }[]
+  label?: string;
+  items: NavItem[];
 }) {
+  const { pathname } = useLocation();
+
   return (
     <SidebarGroup>
-      <SidebarGroupContent className="flex flex-col gap-2">
-        <SidebarMenu>
-          <SidebarMenuItem className="flex items-center gap-2">
-            <SidebarMenuButton
-              tooltip="Quick Create"
-              className="min-w-8 bg-primary text-primary-foreground duration-200 ease-linear hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
-            >
-              <PlusCircleIcon
-              />
-              <span>Quick Create</span>
-            </SidebarMenuButton>
-            <Button
-              size="icon"
-              className="size-8 group-data-[collapsible=icon]:opacity-0"
-              variant="outline"
-            >
-              <EnvelopeIcon
-              />
-              <span className="sr-only">Inbox</span>
-            </Button>
-          </SidebarMenuItem>
-        </SidebarMenu>
-        <SidebarMenu>
-          {items.map((item) => (
+      {label && <SidebarGroupLabel>{label}</SidebarGroupLabel>}
+      <SidebarMenu>
+        {items.map((item) =>
+          item.items && item.items.length > 0 ? (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton tooltip={item.title}>
-                {item.icon}
-                <span>{item.title}</span>
+              <Collapsible.Root
+                defaultOpen={item.items.some((sub) =>
+                  pathname.startsWith(sub.url),
+                )}
+                className="group/collapsible w-full"
+              >
+                <Collapsible.Trigger asChild>
+                  <SidebarMenuButton
+                    tooltip={item.title}
+                    data-active={
+                      pathname === item.url ||
+                      item.items?.some((sub) => pathname.startsWith(sub.url))
+                    }
+                  >
+                    {item.icon}
+                    <span>{item.title}</span>
+                    <CaretDownIcon className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-180" />
+                  </SidebarMenuButton>
+                </Collapsible.Trigger>
+                <Collapsible.Content>
+                  <SidebarMenuSub>
+                    {item.items.map((subItem) => (
+                      <SidebarMenuSubItem key={subItem.title}>
+                        <SidebarMenuSubButton
+                          asChild
+                          data-active={pathname === subItem.url}
+                        >
+                          <Link to={subItem.url}>{subItem.title}</Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    ))}
+                  </SidebarMenuSub>
+                </Collapsible.Content>
+              </Collapsible.Root>
+            </SidebarMenuItem>
+          ) : (
+            // ── Simple flat link ─────────────────────────────────────────
+            <SidebarMenuItem key={item.title}>
+              <SidebarMenuButton
+                asChild
+                tooltip={item.title}
+                data-active={pathname === item.url}
+              >
+                <Link to={item.url}>
+                  {item.icon}
+                  <span>{item.title}</span>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
-      </SidebarGroupContent>
+          ),
+        )}
+      </SidebarMenu>
     </SidebarGroup>
-  )
+  );
 }

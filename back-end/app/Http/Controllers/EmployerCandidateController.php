@@ -30,6 +30,24 @@ class EmployerCandidateController extends Controller
         return response()->json(["data" => $employerCandidate]);
     }
 
+    public function me()
+    {
+        $userId = auth()->id();
+        $employerCandidate = EmployerCandidate::where(
+            "user_id",
+            $userId,
+        )->first();
+
+        if (!$employerCandidate) {
+            return response()->json(
+                ["message" => "Candidate profile not found"],
+                404,
+            );
+        }
+
+        return response()->json(["data" => $employerCandidate]);
+    }
+
     public function update(Request $request)
     {
         // $employerCandidate = Auth::user()->employerCandidate;
@@ -42,7 +60,8 @@ class EmployerCandidateController extends Controller
             "headline" => "sometimes|string|max:255",
             "phone" => "sometimes|string|max:20",
             "location" => "sometimes|string|max:255",
-            "social_media" => "sometimes|array|url|max:255",
+            "social_media" => "sometimes|array",
+            "social_media.*" => "sometimes|url|max:255",
         ]);
 
         $employerCandidate->update($validated);
@@ -52,11 +71,4 @@ class EmployerCandidateController extends Controller
         ]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(EmployerCandidate $employerCandidate)
-    {
-        //
-    }
 }

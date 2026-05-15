@@ -8,12 +8,13 @@ import {
   setAuthToken,
 } from "@/utils/api";
 
-type AuthUser = {
+export type AuthUser = {
   id: number;
   name: string;
   email: string;
   completed_profile: boolean;
   role?: string;
+  avatar?: string;
 };
 
 type CompleteProfileResponse = {

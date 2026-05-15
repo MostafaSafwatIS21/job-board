@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Application;
+use App\Models\EmployerCandidate;
 use Illuminate\Http\Request;
 
 class ApplicationController extends Controller
@@ -65,7 +66,18 @@ class ApplicationController extends Controller
     public function show(Application $application)
     {
         $applicationId = request()->route("applicationId");
-        $application = Application::with("candidate:id,name")->with("job:id,title,description")->findOrFail($applicationId);
+        $application = Application::with("candidate:id,name")
+            ->with("job")
+            ->findOrFail($applicationId);
+
+        $candidateProfile = EmployerCandidate::where(
+            "user_id",
+            $application->candidate_id,
+        )->first();
+
+        if ($application->candidate && $candidateProfile) {
+            $application->candidate->resume_url = $candidateProfile->resume_url;
+        }
 
         return response()->json(["data" => $application], 200);
     }
@@ -153,5 +165,48 @@ class ApplicationController extends Controller
             ],
             200,
         );
+    }
+
+    /**
+     * Update application status by employer.
+     */
+    public function updateStatusByEmployer(Request $request)
+    {
+        $applicationId = request()->route("applicationId");
+        $application = Application::with("job")->findOrFail($applicationId);
+
+        $userId = auth()->id();
+        if ($application->job?->employer_id !== $userId) {
+            return response()->json(
+                [
+                    "message" =>
+                        "You are not authorized to update this application",
+                ],
+                403,
+            );
+        }
+
+        $validated = $request->validate([
+            "status" => "required|in:pending,approved,rejected",
+        ]);
+
+        $application->update([
+            "status" => $validated["status"],
+        ]);
+
+        return response()->json(
+            [
+                "message" => "Application status updated successfully",
+                "data" => $application,
+            ],
+            200,
+        );
+    }
+    public function candidateApplications()
+    {
+        $userId = auth()->id();
+        $applications = Application::with("job")->where("candidate_id", $userId)->get();
+
+        return response()->json(["data" => $applications], 200);
     }
 }

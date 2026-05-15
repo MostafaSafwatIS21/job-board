@@ -87,6 +87,26 @@ export const getJobListingById = createAsyncThunk(
   },
 );
 
+export const createJobListing = createAsyncThunk<
+  JobList,
+  Partial<JobList>,
+  { rejectValue: string }
+>("job-listings/createJobListing", async (jobData, thunkApi) => {
+  try {
+    const response = await api.post("/job-listings", jobData);
+    toast.success("Job listing created successfully!");
+    return response.data.data as JobList;
+  } catch (error) {
+    const errorMessage = getApiErrorMessage(error);
+
+    toast.error(errorMessage, {
+      description: "Failed to create job listing.",
+    });
+
+    return thunkApi.rejectWithValue(errorMessage);
+  }
+});
+
 const initialState: JobListState = {
   jobs: [],
   currentJob: null,
@@ -138,6 +158,20 @@ const jobListSlice = createSlice({
       state.loading = false;
     });
     builder.addCase(getJobListingById.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload as string;
+    });
+
+    // ── createJobListing ──
+    builder.addCase(createJobListing.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(createJobListing.fulfilled, (state, action) => {
+      state.jobs.push(action.payload);
+      state.loading = false;
+    });
+    builder.addCase(createJobListing.rejected, (state, action) => {
       state.loading = false;
       state.error = action.payload as string;
     });

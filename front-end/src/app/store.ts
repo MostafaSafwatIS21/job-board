@@ -1,13 +1,19 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authSlice from "./auth/authSlice";
-import jobListReducer from "./jobListSlice";
+import jobListReducer from "./jobListing/jobListSlice";
 import applicationReducer from "./application/appSlice";
+import adminReducer from "./admin/adminSlice";
+import employerReducer from "./employer/employerSlice";
+import candidateReducer from "./candidate/candidateSlice";
 
 const store = configureStore({
   reducer: {
     auth: authSlice,
     jobList: jobListReducer,
     applications: applicationReducer,
+    admin: adminReducer,
+    employer: employerReducer,
+    candidate: candidateReducer,
   },
 });
 

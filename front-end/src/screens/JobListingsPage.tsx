@@ -1,4 +1,4 @@
-import { getJobListings } from "@/app/jobListSlice";
+import { getJobListings } from "@/app/jobListing/jobListSlice";
 import type { AppDispatch, RootState } from "@/app/store";
 import { FilterSidebar } from "@/components/FilterSidebar";
 import { JobPost } from "@/components/JobPost";

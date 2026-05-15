@@ -65,4 +65,21 @@ class AdminController extends Controller
             200,
         );
     }
+
+    /**
+     * Get all job listings for a specific employer
+     */
+    public function reviewEmployerJobListings(Request $request, $employerId)
+    {
+        $employerProfile = EmployerProfile::findOrFail($employerId);
+        $jobListings = $employerProfile->jobListings;
+
+        return response()->json(
+            [
+                "message" => "Employer job listings retrieved successfully",
+                "data" => $jobListings,
+            ],
+            200,
+        );
+    }
 }

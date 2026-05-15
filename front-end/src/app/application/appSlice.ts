@@ -5,12 +5,22 @@ import { toast } from "sonner";
 type ApplicationCandidate = {
   id: number;
   name: string;
+  resume_url?: string | null;
 };
 
 type ApplicationJob = {
   id: number;
   title: string;
   description: string;
+  work_type: string;
+  experience_level: string;
+  salary_min: number;
+  salary_max: number;
+  status: string;
+  location: string;
+  deadline: string;
+  created_at: string;
+  skills: string[];
 };
 
 interface links {
@@ -171,6 +181,54 @@ export const deleteApplication = createAsyncThunk(
   },
 );
 
+export const updateApplicationStatus = createAsyncThunk(
+  "applications/updateStatus",
+  async (
+    payload: {
+      applicationId: number;
+      status: "pending" | "approved" | "rejected";
+    },
+    thunkApi,
+  ) => {
+    try {
+      const response = await api.put<ApplicationResponse>(
+        `/applications/${payload.applicationId}/status`,
+        {
+          status: payload.status,
+        },
+      );
+      toast.success("Application status updated", {
+        description: `Status set to ${payload.status}.`,
+      });
+      return response.data.data;
+    } catch (error) {
+      const message = getApiErrorMessage(error);
+      toast.error(message, {
+        description: "Could not update application status.",
+      });
+      return thunkApi.rejectWithValue(message);
+    }
+  },
+);
+
+// candidates/applications
+
+export const fetchCandidateApplications = createAsyncThunk(
+  "applications/fetchCandidateApplications",
+  async (_, thunkApi) => {
+    try {
+      const response = await api.get<ApplicationListResponse>(
+        `/applications/candidates`,
+      );
+      return response.data.data;
+    } catch (error) {
+      const message = getApiErrorMessage(error);
+      toast.error(message, { description: "Failed to load applications." });
+      return thunkApi.rejectWithValue(message);
+    }
+  },
+);
+
 const applicationSlice = createSlice({
   name: "applications",
   initialState,
@@ -251,6 +309,37 @@ const applicationSlice = createSlice({
       })
       .addCase(deleteApplication.rejected, (state, action) => {
         state.submitting = false;
+        state.error = action.payload as string;
+      });
+    builder
+      .addCase(updateApplicationStatus.pending, (state) => {
+        state.submitting = true;
+        state.error = null;
+      })
+      .addCase(updateApplicationStatus.fulfilled, (state, action) => {
+        state.submitting = false;
+        state.items = state.items.map((item) =>
+          item.id === action.payload.id ? action.payload : item,
+        );
+        if (state.current?.id === action.payload.id) {
+          state.current = action.payload;
+        }
+      })
+      .addCase(updateApplicationStatus.rejected, (state, action) => {
+        state.submitting = false;
+        state.error = action.payload as string;
+      });
+    builder
+      .addCase(fetchCandidateApplications.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchCandidateApplications.fulfilled, (state, action) => {
+        state.items = action.payload;
+        state.loading = false;
+      })
+      .addCase(fetchCandidateApplications.rejected, (state, action) => {
+        state.loading = false;
         state.error = action.payload as string;
       });
   },

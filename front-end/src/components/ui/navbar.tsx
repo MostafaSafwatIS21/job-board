@@ -6,6 +6,8 @@ import { Link, NavLink } from "react-router-dom";
 import { useAppSelector } from "@/app/hooks";
 import { selectAuth } from "@/app/auth/authSlice";
 import { Button } from "@/components/ui/button";
+import { ProfileMenu } from "@/components/ProfileMenu";
+
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -295,11 +297,8 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
             </div>
           )}
           {isLoggedIn && (
-            <div className="flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm">
-              <span className="text-muted-foreground">Hi,</span>
-              <span className="font-medium">
-                {auth.user?.name?.trim() || "Account"}
-              </span>
+            <div className="flex items-center gap-2 ">
+              <ProfileMenu user={auth.user} />
             </div>
           )}
         </div>

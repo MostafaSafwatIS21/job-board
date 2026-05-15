@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class EmployerProfile extends Model
 {
@@ -24,5 +25,13 @@ class EmployerProfile extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get all job listings for this employer.
+     */
+    public function jobListings(): HasMany
+    {
+        return $this->hasMany(JobListing::class, "employer_id", "user_id");
     }
 }

@@ -1,6 +1,7 @@
 import Application from "./Application";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/app/store";
+import { Link } from "react-router-dom";
 
 const ApplicationList = () => {
   const { items, loading, error } = useSelector(
@@ -25,11 +26,12 @@ const ApplicationList = () => {
         <p className="text-sm text-muted-foreground">No applications yet.</p>
       ) : (
         sortedItems.map((app) => (
-          <Application
-            key={app.id}
-            app={app}
-            isOwner={currentUserId === app.candidate_id}
-          />
+          <Link to={`/application/${app.id}`} key={app.id}>
+            <Application
+              app={app}
+              isOwner={currentUserId === app.candidate_id}
+            />
+          </Link>
         ))
       )}
     </div>

@@ -1,4 +1,7 @@
-import { clearCurrentJob, getJobListingById } from "@/app/jobListSlice";
+import {
+  clearCurrentJob,
+  getJobListingById,
+} from "@/app/jobListing/jobListSlice";
 import type { AppDispatch, RootState } from "@/app/store";
 import { fetchApplicationsByJob } from "@/app/application/appSlice";
 import { ArrowArcRightIcon, ArrowLeftIcon } from "@phosphor-icons/react";

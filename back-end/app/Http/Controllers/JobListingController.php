@@ -111,7 +111,6 @@ class JobListingController extends Controller
             "title" => "required|string|max:255",
             "description" => "required|string",
             "location" => "required|string|max:255",
-            "salary" => "required|numeric",
             "work_type" => "required|in:remote,on_site",
             "experience_level" =>
                 "required|in:entry_level,mid_level,senior_level,executive_level",

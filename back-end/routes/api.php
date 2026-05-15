@@ -76,6 +76,16 @@ Route::middleware(["auth:sanctum"])->group(function () {
         "index",
     ])->middleware(AllowTo::class . ":admin");
 
+    Route::get("/employers/job-listings", [
+        EmployerProfileController::class,
+        "jobListings",
+    ])->middleware(AllowTo::class . ":employer");
+
+    Route::get("/employers/me", [
+        EmployerProfileController::class,
+        "me",
+    ])->middleware(AllowTo::class . ":employer");
+
     Route::get("/employers/{employerProfile}", [
         EmployerProfileController::class,
         "show",
@@ -124,6 +134,10 @@ Route::middleware(["auth:sanctum", AllowTo::class . ":admin"])->group(
             AdminController::class,
             "updateJobListingStatus",
         ]);
+        Route::get("/admin/employers/{employerId}/job-listings", [
+            AdminController::class,
+            "reviewEmployerJobListings",
+        ]);
     },
 );
 
@@ -131,6 +145,10 @@ Route::middleware(["auth:sanctum", AllowTo::class . ":admin"])->group(
 
 Route::middleware(["auth:sanctum"])->group(function () {
     Route::get("/candidates", [EmployerCandidateController::class, "index"]);
+    Route::get("/candidates/me", [
+        EmployerCandidateController::class,
+        "me",
+    ])->middleware(AllowTo::class . ":candidate");
     Route::get("/candidates/{candidateId}", [
         EmployerCandidateController::class,
         "show",
@@ -145,19 +163,32 @@ Route::middleware(["auth:sanctum"])->group(function () {
     ]);
 });
 
-
 // application routes
 Route::prefix("applications")->group(function () {
     Route::middleware(["auth:sanctum"])->group(function () {
-    Route::get("/{job_id}/job", [ApplicationController::class, "index"]);
-    Route::get("/{applicationId}/", [ApplicationController::class, "show"]);
-    Route::post("/{job_id}/", [ApplicationController::class, "store"])->middleware(AllowTo::class . ":candidate");
-    Route::put("/{applicationId}/", [ApplicationController::class, "update"])->middleware(AllowTo::class . ":candidate");
-    Route::delete("/{applicationId}/", [
-        ApplicationController::class,
-        "destroy",
-    ])->middleware(AllowTo::class . ":candidate");
-});
+        Route::get("/{job_id}/job", [ApplicationController::class, "index"]);
+        Route::get("/candidates", [
+            ApplicationController::class,
+            "candidateApplications",
+        ])->middleware(AllowTo::class . ":candidate");
+        Route::get("/{applicationId}/", [ApplicationController::class, "show"]);
+        Route::post("/{job_id}/", [
+            ApplicationController::class,
+            "store",
+        ])->middleware(AllowTo::class . ":candidate");
+        Route::put("/{applicationId}/", [
+            ApplicationController::class,
+            "update",
+        ])->middleware(AllowTo::class . ":candidate");
+        Route::put("/{applicationId}/status", [
+            ApplicationController::class,
+            "updateStatusByEmployer",
+        ])->middleware(AllowTo::class . ":employer");
+        Route::delete("/{applicationId}/", [
+            ApplicationController::class,
+            "destroy",
+        ])->middleware(AllowTo::class . ":candidate");
+    });
 });
 
 Route::apiResource("categories", CategoriesController::class);

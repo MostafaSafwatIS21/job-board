@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\EmployerProfile;
+use App\Models\JobListing;
 use Illuminate\Http\Request;
 
 class EmployerProfileController extends Controller
@@ -27,6 +28,27 @@ class EmployerProfileController extends Controller
 
     public function show(EmployerProfile $employerProfile)
     {
+        return response()->json(
+            [
+                "message" => "Employer profile retrieved successfully",
+                "data" => $employerProfile,
+            ],
+            200,
+        );
+    }
+
+    public function me()
+    {
+        $user = auth()->user();
+        $employerProfile = $user?->employerProfile;
+
+        if (!$employerProfile) {
+            return response()->json(
+                ["message" => "Employer profile not found"],
+                404,
+            );
+        }
+
         return response()->json(
             [
                 "message" => "Employer profile retrieved successfully",
@@ -67,6 +89,19 @@ class EmployerProfileController extends Controller
             [
                 "message" => "Employer profile deleted successfully",
                 "info" => "This not currently available",
+            ],
+            200,
+        );
+    }
+    // get employer job listings
+    public function jobListings()
+    {
+        $userId = auth()->id();
+        $jobListings = JobListing::where("employer_id", $userId)->get();
+        return response()->json(
+            [
+                "message" => "Employer job listings retrieved successfully",
+                "data" => $jobListings,
             ],
             200,
         );

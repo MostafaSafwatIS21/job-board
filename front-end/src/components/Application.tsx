@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
 import type { AppDispatch, RootState } from "@/app/store";
@@ -19,6 +19,12 @@ interface ApplicationProps {
 
 type LinkItem = string | { url: string; label?: string };
 
+const statusBadge: Record<string, { bg: string; text: string }> = {
+  pending: { bg: "bg-amber-500/10", text: "text-amber-600" },
+  approved: { bg: "bg-green-500/10", text: "text-green-600" },
+  rejected: { bg: "bg-red-500/10", text: "text-red-600" },
+};
+
 const normalizeLinks = (links?: ApplicationType["links"]) => {
   const normalized =
     (links as LinkItem[] | undefined)?.map((link) =>
@@ -38,13 +44,6 @@ const Application = ({ app, isOwner }: ApplicationProps) => {
     normalizeLinks(app.links),
   );
   const canManage = isOwner && app.status === "pending";
-
-  useEffect(() => {
-    if (!isEditing) {
-      setDraftCoverLetter(app.cover_letter);
-      setDraftLinks(normalizeLinks(app.links));
-    }
-  }, [app.cover_letter, app.links, isEditing]);
 
   const candidateName = app.candidate?.name || "Unknown candidate";
   const avatarSrc =
@@ -107,21 +106,30 @@ const Application = ({ app, isOwner }: ApplicationProps) => {
             </p>
           </div>
         </div>
-        {canManage ? (
-          <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" onClick={handleStartEdit}>
-              Edit
-            </Button>
-            <Button
-              size="sm"
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={isSubmitting}
-            >
-              Delete
-            </Button>
-          </div>
-        ) : null}
+        <div className="flex items-center gap-2">
+          <span
+            className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium capitalize ${
+              statusBadge[app.status]?.bg
+            } ${statusBadge[app.status]?.text}`}
+          >
+            {app.status}
+          </span>
+          {canManage ? (
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={handleStartEdit}>
+                Edit
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={isSubmitting}
+              >
+                Delete
+              </Button>
+            </div>
+          ) : null}
+        </div>
       </div>
 
       {isEditing ? (

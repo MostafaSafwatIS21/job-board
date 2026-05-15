@@ -7,7 +7,7 @@ import { Label } from "./ui/label";
 import type { IQuery } from "@/interfaces";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "@/app/store";
-import { getJobListings } from "@/app/jobListSlice";
+import { getJobListings } from "@/app/jobListing/jobListSlice";
 
 function FilterSidebarComponent() {
   const [value, setValue] = React.useState([0.3, 0.7]);
