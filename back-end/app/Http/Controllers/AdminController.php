@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\UserNotified;
 use App\Models\EmployerProfile;
 use App\Models\JobListing;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 
 class AdminController extends Controller
@@ -56,6 +58,19 @@ class AdminController extends Controller
         $jobList = JobListing::findOrFail($jobListingId);
         $jobList->status = $request->input("status");
         $jobList->save();
+
+        $notification = Notification::create([
+            "user_id" => $jobList->employer_id,
+            "title" => "Job listing status updated",
+            "body" =>
+                "Your job listing \"" .
+                $jobList->title .
+                "\" was " .
+                $jobList->status .
+                ".",
+            "read" => false,
+        ]);
+        broadcast(new UserNotified($notification));
 
         return response()->json(
             [

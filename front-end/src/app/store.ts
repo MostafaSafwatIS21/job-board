@@ -5,6 +5,7 @@ import applicationReducer from "./application/appSlice";
 import adminReducer from "./admin/adminSlice";
 import employerReducer from "./employer/employerSlice";
 import candidateReducer from "./candidate/candidateSlice";
+import notificationReducer from "./notification/notificationSlice";
 
 const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ const store = configureStore({
     admin: adminReducer,
     employer: employerReducer,
     candidate: candidateReducer,
+    notification: notificationReducer,
   },
 });
 

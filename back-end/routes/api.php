@@ -10,6 +10,9 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UploadController;
 use App\Http\Controllers\AdminController;
+use Illuminate\Support\Facades\Broadcast;
+use App\Events\UserNotified;
+use App\Models\Notification;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -19,6 +22,14 @@ use App\Http\Middleware\AllowTo;
 // Authenticated user route
 
 Route::middleware("auth:sanctum")->get("/user", function (Request $request) {
+    // send notification to the user
+    $notification = Notification::create([
+        'user_id' => $request->user()->id,
+        'title' => 'New Message',
+        'body' => 'You have received a new message regarding the project.',
+        'read' => false,
+    ]);
+    broadcast(new UserNotified($notification));
     return response()->json(["user" => $request->user()]);
 });
 Route::prefix("auth")->group(function () {
@@ -67,6 +78,12 @@ Route::middleware(["auth:sanctum"])->group(function () {
         JobListingController::class,
         "destroy",
     ])->middleware(AllowTo::class . ":employer");
+
+    Route::get("messages/threads", [MessageController::class, "threads"]);
+    Route::apiResource("messages", MessageController::class)->only([
+        "index",
+        "store",
+    ]);
 });
 
 // employer profile routes
@@ -192,5 +209,8 @@ Route::prefix("applications")->group(function () {
 });
 
 Route::apiResource("categories", CategoriesController::class);
-Route::apiResource("messages", MessageController::class);
+// Messages are protected by auth:sanctum in the group above.
 Route::apiResource("notifications", NotificationController::class);
+
+
+Broadcast::routes(['middleware' => ['auth:sanctum']]);

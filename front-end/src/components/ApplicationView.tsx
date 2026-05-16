@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import type { AppDispatch, RootState } from "@/app/store";
 import {
@@ -57,7 +57,9 @@ const ApplicationView = () => {
     error,
     submitting,
   } = useSelector((state: RootState) => state.applications);
-  const currentUserId = useSelector((state: RootState) => state.auth.user?.id);
+  const authUser = useSelector((state: RootState) => state.auth.user);
+  const currentUserId = authUser?.id;
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [draftCoverLetter, setDraftCoverLetter] = useState("");
   const [draftLinks, setDraftLinks] = useState<string[]>([""]);
@@ -98,6 +100,16 @@ const ApplicationView = () => {
       ? (app.candidate as { avatar?: string }).avatar
       : undefined;
   const resumeUrl = app.candidate?.resume_url ?? "";
+  const isEmployer = authUser?.role === "employer";
+  const chatContact = isEmployer
+    ? app.candidate
+      ? { id: app.candidate.id, name: app.candidate.name }
+      : null
+    : app.job?.employer_id
+      ? { id: app.job.employer_id, name: "Employer" }
+      : null;
+  const canChat = Boolean(currentUserId && chatContact);
+  const chatLabel = isEmployer ? "Chat with Candidate" : "Chat with Employer";
   const canManage = Boolean(
     currentUserId &&
     app.candidate_id === currentUserId &&
@@ -356,9 +368,26 @@ const ApplicationView = () => {
         ) : null}
       </aside>
       <div>
-        <Button variant="outline" className="w-full" disabled={!app.job_id}>
-          Chat with Candidate
+        <Button
+          variant="outline"
+          className="w-full"
+          disabled={!canChat}
+          onClick={() => {
+            if (!canChat || !chatContact) return;
+            navigate(`/chat/${chatContact.id}`, {
+              state: {
+                contactName: chatContact.name,
+              },
+            });
+          }}
+        >
+          {chatLabel}
         </Button>
+        {!canChat && (
+          <p className="mt-2 text-xs text-muted-foreground">
+            Chat is available after an application is submitted.
+          </p>
+        )}
       </div>
     </div>
   );

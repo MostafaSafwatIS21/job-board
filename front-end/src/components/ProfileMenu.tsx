@@ -3,6 +3,7 @@ import {
   GearIcon,
   UserIcon,
   NotificationIcon,
+  ChatIcon,
 } from "@phosphor-icons/react";
 
 import { Button } from "@/components/ui/button";
@@ -51,9 +52,9 @@ export function ProfileMenu({ user }: ProfileMenuProps) {
           <GearIcon />
           Settings
         </DropdownMenuItem>
-        <DropdownMenuItem>
-          <NotificationIcon />
-          Notifications
+        <DropdownMenuItem onClick={() => navigate("/chat")}>
+          <ChatIcon />
+          Chat
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem variant="destructive" onClick={handleLogout}>

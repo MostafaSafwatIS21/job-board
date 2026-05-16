@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\UserNotified;
 use App\Models\Application;
+use App\Models\JobListing;
+use App\Models\Notification;
 use App\Models\EmployerCandidate;
 use Illuminate\Http\Request;
 
@@ -25,8 +28,10 @@ class ApplicationController extends Controller
     public function store(Request $request)
     {
         $userId = auth()->id();
+        $jobId = request()->route("job_id");
+        $job = JobListing::findOrFail($jobId);
         $existingApplication = Application::where("candidate_id", $userId)
-            ->where("job_id", request()->route("job_id"))
+            ->where("job_id", $jobId)
             ->first();
 
         if ($existingApplication) {
@@ -38,7 +43,6 @@ class ApplicationController extends Controller
             );
         }
 
-        $jobId = request()->route("job_id");
         $request->validate([
             "links" => "sometimes|array",
             "cover_letter" => "required|string|min:100",
@@ -50,6 +54,16 @@ class ApplicationController extends Controller
             "cover_letter" => $request->input("cover_letter"),
             "status" => "pending",
         ]);
+
+        $candidateName = $request->user()?->name ?? "A candidate";
+        $notification = Notification::create([
+            "user_id" => $job->employer_id,
+            "title" => "New application received",
+            "body" => $candidateName . " applied to " . $job->title . ".",
+            "read" => false,
+        ]);
+        broadcast(new UserNotified($notification));
+
         return response()->json(
                     [
                         "message" => "Application submitted successfully",
@@ -63,12 +77,20 @@ class ApplicationController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Application $application)
+    public function show(Request $request, $applicationId)
     {
-        $applicationId = request()->route("applicationId");
         $application = Application::with("candidate:id,name")
             ->with("job")
-            ->findOrFail($applicationId);
+            ->find($applicationId);
+
+        if (!$application) {
+            return response()->json(
+                [
+                    "message" => "Application not found",
+                ],
+                404,
+            );
+        }
 
         $candidateProfile = EmployerCandidate::where(
             "user_id",
@@ -77,6 +99,28 @@ class ApplicationController extends Controller
 
         if ($application->candidate && $candidateProfile) {
             $application->candidate->resume_url = $candidateProfile->resume_url;
+        }
+        if (
+            $application->job?->employer_id !== auth()->id() &&
+            $application->candidate_id !== auth()->id()
+        ) {
+            return response()->json(
+                [
+                    "message" =>
+                        "You are not authorized to view this application",
+                ],
+                403,
+            );
+        }
+
+        if (!$application->job) {
+            return response()->json(
+                [
+                    "message" =>
+                        "The job associated with this application no longer exists",
+                ],
+                404,
+            );
         }
 
         return response()->json(["data" => $application], 200);
@@ -193,6 +237,20 @@ class ApplicationController extends Controller
         $application->update([
             "status" => $validated["status"],
         ]);
+
+        $statusLabel = $validated["status"];
+        $notification = Notification::create([
+            "user_id" => $application->candidate_id,
+            "title" => "Application status updated",
+            "body" =>
+                "Your application for " .
+                ($application->job?->title ?? "the job") .
+                " was " .
+                $statusLabel .
+                ".",
+            "read" => false,
+        ]);
+        broadcast(new UserNotified($notification));
 
         return response()->json(
             [

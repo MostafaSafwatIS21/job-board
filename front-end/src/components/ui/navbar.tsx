@@ -3,7 +3,6 @@
 import * as React from "react";
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
-import { useAppSelector } from "@/app/hooks";
 import { selectAuth } from "@/app/auth/authSlice";
 import { Button } from "@/components/ui/button";
 import { ProfileMenu } from "@/components/ProfileMenu";
@@ -19,10 +18,18 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { NotificationBell } from "../NotificationBell";
+import { useAppDispatch, useAppSelector } from "@/app/hooks";
+import {
+  deleteNotification,
+  fetchNotifications,
+  markAllNotificationsRead,
+  markNotificationRead,
+  selectNotifications,
+} from "@/app/notification/notificationSlice";
 
 // Simple logo component for the navbar
-const Logo = (props: React.SVGAttributes<SVGElement>) => {
-  return (
+const Logo = (props: React.SVGAttributes<SVGElement>) => (
     <svg
       aria-label="Logo"
       role="img"
@@ -43,7 +50,6 @@ const Logo = (props: React.SVGAttributes<SVGElement>) => {
       />
     </svg>
   );
-};
 
 // Hamburger icon component
 const HamburgerIcon = ({
@@ -124,8 +130,14 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
   ) => {
     const auth = useAppSelector(selectAuth);
     const isLoggedIn = Boolean(auth.isAuthenticated || auth.token);
+    const dispatch = useAppDispatch();
+    const notifications = useAppSelector(selectNotifications);
     const [isMobile, setIsMobile] = useState(false);
     const containerRef = useRef<HTMLElement>(null);
+
+    useEffect(() => {
+      if (isLoggedIn) dispatch(fetchNotifications());
+    }, [dispatch, isLoggedIn]);
 
     useEffect(() => {
       const checkWidth = () => {
@@ -299,6 +311,12 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
           {isLoggedIn && (
             <div className="flex items-center gap-2 ">
               <ProfileMenu user={auth.user} />
+              <NotificationBell
+                notifications={notifications}
+                onMarkAsRead={(id) => dispatch(markNotificationRead(id))}
+                onMarkAllAsRead={() => dispatch(markAllNotificationsRead())}
+                onDismiss={(id) => dispatch(deleteNotification(id))}
+              />
             </div>
           )}
         </div>

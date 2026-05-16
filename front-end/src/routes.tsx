@@ -11,6 +11,8 @@ import ProtectedRoute from "./guard/auth"; // Import your guard
 import IsCompleted from "./guard/completed";
 import { JobDetails } from "./components/JobDetails";
 import ApplicationView from "./components/ApplicationView";
+import ChatIndex from "./components/ChatIndex";
+import ChatConversation from "./components/ChatConversation";
 import Dashboard from "./components/Dashboard";
 import AdminDashboard from "./screens/admin/AdminDashboard";
 import AdminJobListings from "./screens/admin/AdminJobListings";
@@ -45,6 +47,14 @@ export const router = createBrowserRouter([
             path: "application/:appId",
             element: <ApplicationView />,
           },
+          {
+            path: "chat",
+            element: <ChatIndex />,
+          },
+          {
+            path: "chat/:contactId",
+            element: <ChatConversation />,
+          },
         ],
       },
       {
@@ -52,6 +62,9 @@ export const router = createBrowserRouter([
         children: [
           { path: "complete-profile", element: <CompleteProfilePage /> },
         ],
+      },
+      {
+        element: <ProtectedRoute />,
       },
 
       { path: "*", element: <NotFoundPage /> },

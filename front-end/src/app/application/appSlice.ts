@@ -10,6 +10,7 @@ type ApplicationCandidate = {
 
 type ApplicationJob = {
   id: number;
+  employer_id: number;
   title: string;
   description: string;
   work_type: string;
